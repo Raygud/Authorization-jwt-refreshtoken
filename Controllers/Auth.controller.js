@@ -40,7 +40,8 @@ class AuthController{
                           where: {uuid : data.uuid}
                       }).then(function (record) {
                 
-                        if(data.RefreshToken && data.RefreshToken != NULL){
+                        console.log(data.RefreshToken)
+                        if(data.RefreshToken && data.RefreshToken != null){
                             console.log(data.RefreshToken)
                             console.log("Refresh token detected")
                         }
