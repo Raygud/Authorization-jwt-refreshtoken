@@ -1,7 +1,7 @@
 import OrginizationModel from "../Models/Orginization.model.js"
-import InteresoUserModel from "../Models/InteresoUser.model.js"
+import UserModel from "../Models/User.model.js"
 
-OrginizationModel.hasOne(InteresoUserModel);
+OrginizationModel.hasOne(UserModel);
 
 class OrginizationController {
 constructor(){

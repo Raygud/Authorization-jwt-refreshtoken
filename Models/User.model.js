@@ -1,61 +1,75 @@
 import { sequelize } from '../Config/db.sequelize.js'
-import { DataTypes, Model } from 'sequelize'
+import { DataTypes, Model, UUIDV4 } from 'sequelize'
 import bcrypt from 'bcrypt'
 
-class UserModel extends Model { }
+
+class UserModel extends Model {}
 
 UserModel.init({
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        allowNull: false,
+    uuid: { 
+        type: DataTypes.UUID,
+        defaultValue: UUIDV4,
+        allowNull: true,
         primaryKey: true
     },
-    Firstname: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    Lastname: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    Phone: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
     Username: {
-        type: DataTypes.TEXT,
+        type: DataTypes.CHAR,
         allowNull: false
-    },
-    ProfilePicture: {
-        type: DataTypes.TEXT,
-        allowNull: true
     },
     Email: {
-        type: DataTypes.TEXT,
+        type: DataTypes.CHAR,
         allowNull: false
     },
     Password: {
         type: DataTypes.TEXT,
         allowNull: false
     },
-    OneTimePassword: {
-        type: DataTypes.TEXT,
+    Firstname: {
+        type: DataTypes.CHAR,
+        allowNull: false
+    },
+    Lastname: {
+        type: DataTypes.CHAR,
+        allowNull: false
+    },
+    
+    DateOfBirth: {
+        type: DataTypes.DATE,
+        allowNull: false
+    },
+    
+    Phone: {
+        type: DataTypes.CHAR,
         allowNull: true
     },
-    active: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
+    Gender: {
+        type: DataTypes.CHAR,
+        allowNull: true
+    },
+    Country: {
+        type: DataTypes.CHAR,
+        allowNull: false
+    },
+    City: {
+        type: DataTypes.CHAR,
+        allowNull: false
+    },
+    JobTitle: {
+        type: DataTypes.CHAR,
+        allowNull: true
+    },
+    ProfilePicture: {
+        type: DataTypes.CHAR,
+        allowNull: true
     },
     RefreshToken: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-        defaultValue: false
-    }
-}, {
+        type: DataTypes.CHAR,
+        allowNull: true
+    },
+
+},{
     sequelize,
-    modelName: 'USERS',
+    modelName: 'InteresoUsers',
     freezeTableName: true,
     underscored: false,
     createdAt: true,
@@ -66,10 +80,15 @@ UserModel.init({
         },
         
         beforeUpdate: async (user, options) => {
+            console.log("Running update..")
+
             if(user.OneTimePassword != null){
                 user.OneTimePassword = await createHash(user.OneTimePassword)
             }
-            if(user.Password === null){
+            const CompairPasswords = user._previousDataValues.Password === user.dataValues.Password
+            console.log(CompairPasswords)
+            if(user.Password === null || CompairPasswords){
+                
                 return
             }
             user.Password = await createHash(user.Password)
@@ -83,10 +102,11 @@ UserModel.init({
  * @returns Hashed string
  */
 
-const createHash = async string => {
+ const createHash = async string => {
     const salt = await bcrypt.genSalt(10);
     const hashedString = await bcrypt.hash(string, salt);
     return hashedString;
 }
+
 
 export default UserModel

@@ -1,95 +1,101 @@
-import {Sequelize} from 'sequelize'
 import UserModel from "../Models/User.model.js"
+import OrginizationModel from "../Models/Orginization.model.js"
+import { Sequelize } from "sequelize"
 
-const User = new UserModel;
+OrginizationModel.hasMany(UserModel);
+UserModel.belongsTo(OrginizationModel);
+
 
 class UserController {
-constructor(){
-    console.log("Instance call of User controller")
-}
+  constructor() {
+    console.log("Instance call of Course controller");
+  }
 
-    list = async (req, res) => {
-        const result = await UserModel.findAll()
-        res.json(result)
+  list = async (req, res) => {
+    const result = await UserModel.findAndCountAll({
+      include: OrginizationModel
+      
     }
-
-    get = async (req, res) => {
-        console.log(req.query.id)
-        const result = await UserModel.findOne({
-            
-            where: { id: req.query.id }
-        })
-        res.json(result);
-    }
-
-    create = async (req,res) =>{
-        const { Firstname, Lastname, Phone, Username, ProfilePicture, Email, Password} = req.body;
-        console.log(req.body)
-        if(Email)
-        if(Firstname && Lastname && Phone && Username && ProfilePicture && Email && Password){
-            const model = await UserModel.create(req.body);
-            return res.json({newId: model.id});
-        }else{
-            res.send(418);
-        }
-
-    }
-
-    update = async (req, res) => {
-        const { Firstname, Lastname, Phone, Username, ProfilePicture, Email, Password, OneTimePassword} = req.body;
     
-        if(Firstname && Lastname && Phone && Username && ProfilePicture && Email && Password){
-            const model = await UserModel.update(req.body, {
-            where: { id: req.body.id },
-            individualHooks: true,
-          });
-          return res.json({ status: true });
-        } else {
-          res.sendStatus(418);
-        }
-      };
+    );
+    res.json(result);
+  };
 
-      Exists = async (req, res) => {
-        console.log(req.query.id)
-        const result = await UserModel.findOne({
-            where: { id: req.query.id }
-        })
-        console.log(result)
-        if(result === null){
-            res.send(true);
-        }
-        else{
-            res.send(false);
-        }
-        
+  StaffList = async (req, res) => {
+   
+    const User = await UserModel.findOne({
+      where: { uuid: req.query.uuid },
+      include: [
+        {
+          model: OrginizationModel,
+          attributes: ["id", "Name"],
+        },
+      ],
+    });
+    console.log(User)
+    if(User === null){ return res.sendStatus(404)}
+    const Users = await UserModel.findAndCountAll({
+      where: { uuid: {
+        [Sequelize.Op.not]: req.query.uuid
+      } },
+      include: [
+        {
+          model: OrginizationModel,
+          where: { id: User.OrginizationId},
+          attributes: ["id", "Name"],
+        },
+      ],
+    });
+    const result = {User,Users}
+    res.json(result);
+  };
+  
+  get = async (req, res) => {
+    const result = await UserModel.findOne({
+      where: { uuid: req.params.uuid },
+    });
+    res.json(result);
+  };
+
+  create = async (req, res) => {
+    const { Username, Email, Password, Firstname, Lastname, DateOfBirth, Phone, Gender, Country, City, JobTitle, ProfilePicture, OrginizationId} = req.body;
+    if ( Username && Email && Password && Firstname && Lastname && DateOfBirth && Phone && Gender && Country && City && JobTitle && ProfilePicture && OrginizationId) {
+      console.log("penis")
+
+      const model = await UserModel.create(req.body);
+      return res.json({ newUUID: model.uuid });
+    } else {
+      res.sendStatus(418);
     }
+  };
 
-    delete = async (req, res) => {
+  update = async (req, res) => {
 
-        try {
-
-            await UserModel.destroy({
-
-                where: {
-
-                    id: req.params.id
-
-                }
-
-            })
-
-            res.sendStatus(200)
-
-        } catch (error) {
-
-            res.send(error)
-
-           
-
-        }
-
+    const { Username, Email, Password, Firstname, Lastname, DateOfBirth, Phone, Gender, Country, City, JobTitle, ProfilePicture, OrginizationId} = req.body;
+    if ( Username && Email && Password && Firstname && Lastname && DateOfBirth && Phone && Gender && Country && City && JobTitle && ProfilePicture && OrginizationId) {
+      const model = await UserModel.update(req.body, {
+        where: { uuid: req.query.uuid },
+        individualHooks: true,
+      });
+      return res.json({ status: true });
+    } else {
+      res.sendStatus(418);
     }
+  };
 
+  delete = async (req, res) => {
+    try {
+      await UserModel.destroy({
+        where: {
+          uuid: req.params.uuid,
+        },
+      });
+
+      res.sendStatus(200);
+    } catch (error) {
+      res.send(error);
+    }
+  };
 }
 
-export {UserController}
+export { UserController };
