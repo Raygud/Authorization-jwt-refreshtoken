@@ -3,10 +3,10 @@ import { DataTypes, Model, UUIDV4 } from 'sequelize'
 import bcrypt from 'bcrypt'
 
 
-class UserModel extends Model {}
+class UserModel extends Model { }
 
 UserModel.init({
-    uuid: { 
+    uuid: {
         type: DataTypes.UUID,
         defaultValue: UUIDV4,
         allowNull: true,
@@ -32,12 +32,12 @@ UserModel.init({
         type: DataTypes.CHAR,
         allowNull: false
     },
-    
+
     DateOfBirth: {
         type: DataTypes.DATE,
         allowNull: false
     },
-    
+
     Phone: {
         type: DataTypes.CHAR,
         allowNull: true
@@ -67,7 +67,7 @@ UserModel.init({
         allowNull: true
     },
 
-},{
+}, {
     sequelize,
     modelName: 'InteresoUsers',
     freezeTableName: true,
@@ -76,23 +76,19 @@ UserModel.init({
     updatedAt: true,
     hooks: {
         beforeCreate: async (user, options) => {
-            user.Password = await createHash(user.Password)
+            user.Password = await createHash(user.Password);
         },
-        
-        beforeUpdate: async (user, options) => {
-            console.log("Running update..")
 
-            if(user.OneTimePassword != null){
-                user.OneTimePassword = await createHash(user.OneTimePassword)
+        beforeUpdate: async (user, options) => {
+            if (!user.OneTimePassword || !user.Password) {
+                return;
             }
-            const CompairPasswords = user._previousDataValues.Password === user.dataValues.Password
-            console.log(CompairPasswords)
-            if(user.Password === null || CompairPasswords){
-                
-                return
+
+            user.OneTimePassword = await createHash(user.OneTimePassword);
+            if (user._previousDataValues.Password !== user.dataValues.Password) {
+                user.Password = await createHash(user.Password);
             }
-            user.Password = await createHash(user.Password)
-        }
+        },
     }
 })
 
@@ -102,7 +98,7 @@ UserModel.init({
  * @returns Hashed string
  */
 
- const createHash = async string => {
+const createHash = async string => {
     const salt = await bcrypt.genSalt(10);
     const hashedString = await bcrypt.hash(string, salt);
     return hashedString;
