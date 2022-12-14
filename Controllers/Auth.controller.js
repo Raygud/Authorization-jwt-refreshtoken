@@ -14,7 +14,10 @@ class AuthController {
 
 
     login = async (req, res) => {
-        console.log(req.body);
+
+        const token = req.cookies.token;
+        console.log(token)
+        console.log(req);
         const { username, password } = req.body; // Get users credentials from request
 
         if (username && password) { // Check if request contains username and password propperty 
@@ -70,7 +73,8 @@ class AuthController {
                         data: payload,
                     }, process.env.TOKEN_KEY);  // set access token secret 
                     console.log(Math.floor(Date.now()))
-                    return res.json({ token: token }) // send access token to user
+                    res.cookie('token', token, { secure: true });
+                    res.status(200).send({ message: "Cookie set" });
                 } else {
                     // password did not match
                     res.status(401).send({ message: "Invalid credentials" });
@@ -163,7 +167,9 @@ class AuthController {
                                 data: payload,
                             }, process.env.TOKEN_KEY);
                             console.log("New access token generated")
-                            return res.json({ token: token })
+                            res.cookie('token', token, { secure: true });
+                            res.status(200).send({ message: "Cookie set" });
+
                         }
                     }
 
