@@ -21,3 +21,13 @@ Once the user is logged in, their JSON web token (JWT) is stored in a cookie in 
 ## Backend
 
 A simple backend with user creation and authentication allows users to create accounts and securely log in to the system. This backend provides the necessary functionality to verify the identity of users and grant them access to the system and its resources. By implementing user creation and authentication, the backend can ensure the security and integrity of the system and provide a secure and reliable way for users to access and interact with the system. Overall, a simple backend with user creation and authentication is an essential component of many applications and systems.
+
+## Authentication 
+
+```
+
+```
+
+The code first calls the bcrypt.compare() method, passing in the provided password and the encrypted password from the database. If the two passwords match, the code uses the UserModel.findOne() method to search for the user in the database. If the search is successful, the code checks if the user already has a refresh token. If they don't, the code generates a new refresh token using the jwt library and updates the user's record in the database with the new refresh token.
+
+
