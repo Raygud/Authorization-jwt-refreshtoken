@@ -14,10 +14,7 @@ class AuthController {
 
 
     login = async (req, res) => {
-
-        const token = req.cookies.token;
-        console.log(token)
-        console.log(req);
+        console.log(req.body);
         const { username, password } = req.body; // Get users credentials from request
 
         if (username && password) { // Check if request contains username and password propperty 
@@ -72,9 +69,7 @@ class AuthController {
                         exp: Math.floor(Date.now() / 1000) + 900, // token expires in 15 minutes, Setting access token expiration date, this must be shorter than refresh token exp date
                         data: payload,
                     }, process.env.TOKEN_KEY);  // set access token secret 
-                    console.log(Math.floor(Date.now()))
-                    res.cookie('token', token, { secure: true });
-                    res.status(200).send({ message: "Cookie set" });
+                    return res.json({ token: token }) // send access token to user
                 } else {
                     // password did not match
                     res.status(401).send({ message: "Invalid credentials" });
@@ -163,17 +158,14 @@ class AuthController {
                             }
 
                             const token = jwt.sign({
-                                exp: Math.floor(Date.now() / 1000) + 900, // token expires in 15 minutes
+                                exp: Math.floor(Date.now() / 1000) + (10 * 10),
                                 data: payload,
                             }, process.env.TOKEN_KEY);
                             console.log("New access token generated")
-                            res.cookie('token', token, { secure: true });
-                            res.status(200).send({ message: "Cookie set" });
-
+                            return res.json({ token: token })
                         }
-                    }
 
-                })
+                    })
 
             }
             else {
