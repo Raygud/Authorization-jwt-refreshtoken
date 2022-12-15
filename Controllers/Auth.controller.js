@@ -14,7 +14,7 @@ class AuthController {
 
 
     login = async (req, res) => {
-        console.log(req.body);
+
         const { username, password } = req.body; // Get users credentials from request
 
         if (username && password) { // Check if request contains username and password propperty 
@@ -66,10 +66,17 @@ class AuthController {
                         Email: data.Email
                     }
                     const token = jwt.sign({ //Generating access token
-                        exp: Math.floor(Date.now() / 1000) + 900, // token expires in 15 minutes, Setting access token expiration date, this must be shorter than refresh token exp date
+                        exp: Math.floor(Date.now() + 5 * 60 * 1000),
                         data: payload,
                     }, process.env.TOKEN_KEY);  // set access token secret 
-                    return res.json({ token: token }) // send access token to user
+                    res.cookie('token', token, {
+                        secure: true,
+                        httpOnly: true,
+                        sameSite: 'Strict',
+                        maxAge: 5 * 24 * 60 * 60 * 1000 // Set the maximum age of the cookie first number is number of days :-)
+                    });
+                    res.status(200).send({ message: "Cookie set" });
+                    // return res.json({ token: token }) // send access token to user
                 } else {
                     // password did not match
                     res.status(401).send({ message: "Invalid credentials" });
@@ -84,22 +91,28 @@ class AuthController {
     }
 
     protected = async (req, res) => {
+        const cookie = req.cookies.token;
+        console.log("Cookie", cookie)
 
-        if (req.headers['authorization'] === undefined) { // no bearer token was sent with the request.
-            return res.status(401).send("Invalid token. Please authenticate and try again.")
-        }
+        // if (req.headers['authorization'] === undefined) { // no bearer token was sent with the request.
+        //     return res.status(401).send("Invalid token. Please authenticate and try again.")
+        // }
 
 
-        const Header = req.headers['authorization']
-        const AccessToken = Header.split("Bearer ")[1]; // remove "bearer" 
+        // const Header = req.headers['authorization']
+        // const AccessToken = Header.split("Bearer ")[1]; // remove "bearer" 
 
-        jwt.verify(AccessToken, process.env.TOKEN_KEY, (err, data) => { // Check if access token is valid
+        jwt.verify(cookie, process.env.TOKEN_KEY, (err, data) => { // Check if access token is valid
             console.log(err)
             if (err) {
                 switch (err.message) {
+                    case "jwt must be provided":
+                        console.log(err.message)
+                        res.status(401).send({ message: "Your session has expired. Please log in again to continue." })
+                        break;
                     case "invalid token":
                         console.log(err.message)
-                        res.status(401).send("Invalid token. Please authenticate and try again.")
+                        res.status(401).send({ message: "Invalid token. Please authenticate and try again." })
                         break;
                     case "jwt expired": // the access token has expired so we must now check if there is a refreshtoken
                         console.log(err.message)
@@ -117,7 +130,7 @@ class AuthController {
 
         async function RefreshAuthenticate(AccessTokenValid) {
             console.log("Fetching refresh token")
-            const Decoded = jwt.decode(AccessToken); // decode accesstoken to find user
+            const Decoded = jwt.decode(cookie); // decode accesstoken to find user
             const UserId = Decoded.data.uuid
             const User = await UserModel.findOne({  // find requested user 
                 where: { uuid: UserId },
@@ -131,7 +144,7 @@ class AuthController {
                 console.log("Refresh token detected")
                 jwt.verify(User.RefreshToken, process.env.REFRESH_KEY, (err, data) => {
                     if (err) {
-                        console.log("Session expired")
+                        console.log("Your session has expired. Please log in again to continue.")
                         UserModel.findOne( // if refresh token is not valid, remove it from the database
                             {
                                 where: { uuid: UserId }
@@ -141,12 +154,12 @@ class AuthController {
                                     { where: { uuid: UserId } }
                                 );
                             })
-                        return res.status(401).send({ message: "Session expired" });
+                        return res.status(401).send({ message: "Your session has expired. Please log in again to continue." });
                     } else {
                         // refresh token was detected and verified user now receives a new access token!
                         console.log(AccessTokenValid)
                         if (AccessTokenValid) {
-                            res.sendStatus(200)
+                            res.status(200).send({ message: "Token is valid" });
                         }
                         else {
                             const payload = {
@@ -158,22 +171,33 @@ class AuthController {
                             }
 
                             const token = jwt.sign({
-                                exp: Math.floor(Date.now() / 1000) + (10 * 10),
+                                exp: Math.floor(Date.now() + 5 * 60 * 1000),
                                 data: payload,
                             }, process.env.TOKEN_KEY);
                             console.log("New access token generated")
-                            return res.json({ token: token })
+                            return res.cookie('token', token, {
+                                secure: true,
+                                httpOnly: true,
+                                sameSite: 'Strict',
+                                maxAge: 5 * 24 * 60 * 60 * 1000 // Set the maximum age of the cookie first number is number of days :-)
+                            });
                         }
 
-                    })
+                    }
+                })
 
             }
             else {
                 // No Refresh token detected
                 console.log("No Refresh token detected, please authenticate again")
-                return res.sendStatus(401)
+                return res.status(401).send({ message: "Your session has expired. Please log in again to continue." });
             }
         }
+    }
+
+    logout = async (req, res) => {
+        res.clearCookie("token");
+        res.send({ message: "Cookie deleted" });
     }
 }
 
