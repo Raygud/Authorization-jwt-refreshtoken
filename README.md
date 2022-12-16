@@ -1,6 +1,6 @@
 # JWTAuthenticationReact
 
-The goal of this project is to create a reusable login system using React and JWT (JSON web tokens) that maintains the user's login state even when the browser is refreshed or closed. This allows users to easily log in and access their account without having to constantly re-enter their credentials. Additionally, using React allows for the creation of a user-friendly and intuitive interface, making the login process smooth and easy for users. Overall, this project aims to provide a reliable and efficient way to authenticate and authorize users in a React application.
+The goal of this project is to create a reusable login system using JWT (JSON web tokens) that maintains the user's login state even when the browser is refreshed or closed. This allows users to easily log in and access their account without having to constantly re-enter their credentials. Additionally, using React allows for the creation of a user-friendly and intuitive interface, making the login process smooth and easy for users. Overall, this project aims to provide a reliable and efficient way to authenticate and authorize users in a React application.
 
 ## Authentication vs authorization
 
